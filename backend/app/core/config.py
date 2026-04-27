@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     DATABASE_URL: str
     REDIS_URL: str = "redis://localhost:6379"
+    GEMINI_API_KEY: str = ""
 
     class Config:
         env_file = ".env"

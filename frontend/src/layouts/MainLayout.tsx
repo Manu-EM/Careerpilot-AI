@@ -151,7 +151,7 @@ export default function MainLayout() {
             key={to}
             to={to}
             className={({ isActive }) =>
-              `flex flex-col items-center gap-1 px-3 py-1.5 rounded-lg transition-all ${
+              `flex flex-col items-center gap-1 px-1 py-1.5 rounded-lg transition-all ${
                 isActive ? 'text-blue-400' : 'text-slate-500 hover:text-slate-300'
               }`
             }
