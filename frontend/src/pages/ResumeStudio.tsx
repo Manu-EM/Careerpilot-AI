@@ -1,24 +1,89 @@
 import { useState } from 'react'
-import { FileText, Upload, Sparkles, Download, CheckCircle, AlertCircle } from 'lucide-react'
+import { FileText, Upload, Sparkles, Download, CheckCircle, AlertCircle, Loader } from 'lucide-react'
+import { API_URL } from '../config'
 
-const resumes = [
-  { id: 1, name: 'Frontend Developer Resume', job: 'Google - Frontend Dev',   score: 94, date: '2 hours ago',  status: 'optimized' },
-  { id: 2, name: 'React Engineer Resume',     job: 'Spotify - React Engineer', score: 88, date: '5 hours ago',  status: 'optimized' },
-  { id: 3, name: 'Base Resume',               job: 'General Purpose',          score: 72, date: '3 days ago',   status: 'needs-work' },
-]
+const DEFAULT_RESUME = `John Doe | Frontend Developer
+Email: john@email.com | Phone: +1-555-0123
 
-const skills = {
-  matched:  ['React', 'TypeScript', 'Node.js', 'REST APIs', 'Git', 'Tailwind CSS'],
-  missing:  ['GraphQL', 'AWS', 'Docker', 'Kubernetes'],
-}
+EXPERIENCE
+Frontend Developer - TechCorp (2021-2024)
+- Built React applications with TypeScript and Tailwind CSS
+- Developed REST API integrations with Node.js
+- Improved app performance by 40% using code splitting
+
+SKILLS
+React, TypeScript, JavaScript, Node.js, REST APIs, Git, Tailwind CSS, HTML, CSS
+
+EDUCATION
+B.Tech Computer Science - 2021`
 
 export default function ResumeStudio() {
-  const [selected, setSelected] = useState(resumes[0])
-  const [generating, setGenerating] = useState(false)
+  const [resumeText, setResumeText]       = useState(DEFAULT_RESUME)
+  const [jobDescription, setJobDescription] = useState('')
+  const [jobTitle, setJobTitle]           = useState('')
+  const [company, setCompany]             = useState('')
+  const [result, setResult]               = useState<any>(null)
+  const [coverLetter, setCoverLetter]     = useState('')
+  const [isLoading, setIsLoading]         = useState(false)
+  const [activeTab, setActiveTab]         = useState<'tailor' | 'cover' | 'skills'>('tailor')
 
-  const handleGenerate = () => {
-    setGenerating(true)
-    setTimeout(() => setGenerating(false), 2500)
+  const tailorResume = async () => {
+    if (!jobDescription || !jobTitle || !company) {
+      alert('Please fill in job title, company and job description')
+      return
+    }
+    setIsLoading(true)
+    try {
+      const response = await fetch(`${API_URL}/api/v1/ai/tailor-resume`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resume_text: resumeText, job_description: jobDescription, job_title: jobTitle, company })
+      })
+      const data = await response.json()
+      setResult(data.data)
+      setActiveTab('tailor')
+    } catch(e) {
+      console.log('Error:', e)
+    }
+    setIsLoading(false)
+  }
+
+  const generateCoverLetter = async () => {
+    if (!jobDescription || !jobTitle || !company) {
+      alert('Please fill in job title, company and job description')
+      return
+    }
+    setIsLoading(true)
+    try {
+      const response = await fetch(`${API_URL}/api/v1/ai/cover-letter`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resume_text: resumeText, job_description: jobDescription, job_title: jobTitle, company, candidate_name: 'Manu EM' })
+      })
+      const data = await response.json()
+      setCoverLetter(data.data?.cover_letter || '')
+      setActiveTab('cover')
+    } catch(e) {
+      console.log('Error:', e)
+    }
+    setIsLoading(false)
+  }
+
+  const extractSkills = async () => {
+    setIsLoading(true)
+    try {
+      const response = await fetch(`${API_URL}/api/v1/ai/extract-skills`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resume_text: resumeText })
+      })
+      const data = await response.json()
+      setResult(data.data)
+      setActiveTab('skills')
+    } catch(e) {
+      console.log('Error:', e)
+    }
+    setIsLoading(false)
   }
 
   return (
@@ -27,135 +92,206 @@ export default function ResumeStudio() {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-white">Resume Studio</h1>
-        <p className="text-slate-400 text-sm mt-1">AI tailored resumes for every job</p>
+        <p className="text-slate-400 text-sm mt-1">AI powered resume tailoring</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-        {/* Resume List */}
-        <div className="lg:col-span-1 space-y-3">
-          <h2 className="text-slate-300 text-sm font-semibold uppercase tracking-wider mb-3">Your Resumes</h2>
+        {/* Left — Input */}
+        <div className="space-y-4">
 
-          {resumes.map(resume => (
-            <div
-              key={resume.id}
-              onClick={() => setSelected(resume)}
-              className={`p-4 rounded-xl border cursor-pointer transition-all ${
-                selected.id === resume.id
-                  ? 'border-blue-500 bg-blue-500/10'
-                  : 'border-slate-800 bg-slate-900 hover:border-slate-600'
-              }`}
+          {/* Resume Input */}
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+            <h2 className="text-white font-semibold mb-3 flex items-center gap-2">
+              <FileText className="w-4 h-4 text-blue-400" />
+              Your Resume
+            </h2>
+            <textarea
+              value={resumeText}
+              onChange={e => setResumeText(e.target.value)}
+              rows={8}
+              className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white text-xs font-mono placeholder-slate-500 focus:outline-none focus:border-blue-500 resize-none"
+              placeholder="Paste your resume here..."
+            />
+          </div>
+
+          {/* Job Details */}
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
+            <h2 className="text-white font-semibold flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-amber-400" />
+              Target Job
+            </h2>
+            <input
+              type="text"
+              placeholder="Job Title (e.g. Frontend Developer)"
+              value={jobTitle}
+              onChange={e => setJobTitle(e.target.value)}
+              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-blue-500"
+            />
+            <input
+              type="text"
+              placeholder="Company (e.g. Google)"
+              value={company}
+              onChange={e => setCompany(e.target.value)}
+              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-blue-500"
+            />
+            <textarea
+              placeholder="Paste the job description here..."
+              value={jobDescription}
+              onChange={e => setJobDescription(e.target.value)}
+              rows={5}
+              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-blue-500 resize-none"
+            />
+          </div>
+
+          {/* Action Buttons */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <button
+              onClick={tailorResume}
+              disabled={isLoading}
+              className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-70 text-white text-sm font-medium py-2.5 rounded-lg transition-colors"
             >
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-blue-400 flex-shrink-0" />
-                  <p className="text-white text-sm font-medium">{resume.name}</p>
-                </div>
-                {resume.status === 'optimized'
-                  ? <CheckCircle className="w-4 h-4 text-green-400 flex-shrink-0" />
-                  : <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0" />
-                }
-              </div>
-              <p className="text-slate-400 text-xs mb-2">{resume.job}</p>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-500">{resume.date}</span>
-                <span className={`text-xs font-bold ${
-                  resume.score >= 90 ? 'text-green-400' :
-                  resume.score >= 80 ? 'text-amber-400' : 'text-red-400'
-                }`}>{resume.score}% ATS</span>
-              </div>
-            </div>
-          ))}
-
-          {/* Upload Button */}
-          <button className="w-full border-2 border-dashed border-slate-700 hover:border-blue-500 rounded-xl p-4 flex flex-col items-center gap-2 transition-colors group">
-            <Upload className="w-5 h-5 text-slate-500 group-hover:text-blue-400" />
-            <span className="text-slate-500 group-hover:text-blue-400 text-sm">Upload New Resume</span>
-          </button>
+              {isLoading ? <Loader className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+              Tailor Resume
+            </button>
+            <button
+              onClick={generateCoverLetter}
+              disabled={isLoading}
+              className="flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-70 text-white text-sm font-medium py-2.5 rounded-lg transition-colors"
+            >
+              {isLoading ? <Loader className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+              Cover Letter
+            </button>
+            <button
+              onClick={extractSkills}
+              disabled={isLoading}
+              className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-70 text-white text-sm font-medium py-2.5 rounded-lg transition-colors"
+            >
+              {isLoading ? <Loader className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+              Extract Skills
+            </button>
+          </div>
         </div>
 
-        {/* Resume Detail */}
-        <div className="lg:col-span-2 space-y-4">
+        {/* Right — Output */}
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
 
-          {/* ATS Score */}
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-white font-semibold">{selected.name}</h2>
-              <span className="text-slate-400 text-xs">{selected.job}</span>
-            </div>
-
-            {/* Score Bar */}
-            <div className="mb-4">
-              <div className="flex justify-between mb-2">
-                <span className="text-slate-400 text-sm">ATS Score</span>
-                <span className={`text-sm font-bold ${
-                  selected.score >= 90 ? 'text-green-400' :
-                  selected.score >= 80 ? 'text-amber-400' : 'text-red-400'
-                }`}>{selected.score}%</span>
-              </div>
-              <div className="w-full bg-slate-800 rounded-full h-2.5">
-                <div
-                  className={`h-2.5 rounded-full transition-all duration-500 ${
-                    selected.score >= 90 ? 'bg-green-500' :
-                    selected.score >= 80 ? 'bg-amber-500' : 'bg-red-500'
-                  }`}
-                  style={{ width: `${selected.score}%` }}
-                />
-              </div>
-            </div>
-
-            {/* Skills */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <p className="text-green-400 text-xs font-semibold mb-2 flex items-center gap-1">
-                  <CheckCircle className="w-3.5 h-3.5" /> Matched Skills
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {skills.matched.map(s => (
-                    <span key={s} className="bg-green-500/10 text-green-400 text-xs px-2.5 py-1 rounded-full">{s}</span>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <p className="text-red-400 text-xs font-semibold mb-2 flex items-center gap-1">
-                  <AlertCircle className="w-3.5 h-3.5" /> Missing Skills
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {skills.missing.map(s => (
-                    <span key={s} className="bg-red-500/10 text-red-400 text-xs px-2.5 py-1 rounded-full">{s}</span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* AI Actions */}
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-            <h2 className="text-white font-semibold mb-4">AI Actions</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* Tabs */}
+          <div className="flex gap-2 mb-4">
+            {(['tailor', 'cover', 'skills'] as const).map(tab => (
               <button
-                onClick={handleGenerate}
-                disabled={generating}
-                className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-70 text-white text-sm font-medium py-3 rounded-lg transition-colors"
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors capitalize ${
+                  activeTab === tab ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'
+                }`}
               >
-                <Sparkles className="w-4 h-4" />
-                {generating ? 'Generating...' : 'Tailor for This Job'}
+                {tab === 'tailor' ? 'Tailored Resume' : tab === 'cover' ? 'Cover Letter' : 'Skills'}
               </button>
-              <button className="flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium py-3 rounded-lg transition-colors">
-                <FileText className="w-4 h-4" />
-                Generate Cover Letter
-              </button>
-              <button className="flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium py-3 rounded-lg transition-colors">
-                <Sparkles className="w-4 h-4" />
-                Optimize Keywords
-              </button>
-              <button className="flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium py-3 rounded-lg transition-colors">
-                <Download className="w-4 h-4" />
-                Download PDF
-              </button>
-            </div>
+            ))}
           </div>
 
+          {/* Loading */}
+          {isLoading && (
+            <div className="flex flex-col items-center justify-center py-16 gap-3">
+              <Loader className="w-8 h-8 text-blue-400 animate-spin" />
+              <p className="text-slate-400 text-sm">Gemini AI is working...</p>
+            </div>
+          )}
+
+          {/* Tailored Resume */}
+          {!isLoading && activeTab === 'tailor' && result?.tailored_resume && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-green-400 text-xs font-medium">✓ Resume tailored successfully</p>
+                <button
+                  onClick={() => navigator.clipboard.writeText(result.tailored_resume)}
+                  className="text-blue-400 text-xs hover:text-blue-300"
+                >
+                  Copy
+                </button>
+              </div>
+              <textarea
+                value={result.tailored_resume}
+                readOnly
+                rows={12}
+                className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white text-xs font-mono resize-none focus:outline-none"
+              />
+              {result.missing_keywords?.length > 0 && (
+                <div>
+                  <p className="text-red-400 text-xs font-medium mb-2 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" /> Missing Keywords
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {result.missing_keywords.map((kw: string) => (
+                      <span key={kw} className="bg-red-500/10 text-red-400 text-xs px-2 py-1 rounded-full">{kw}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Cover Letter */}
+          {!isLoading && activeTab === 'cover' && coverLetter && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-green-400 text-xs font-medium">✓ Cover letter generated</p>
+                <button
+                  onClick={() => navigator.clipboard.writeText(coverLetter)}
+                  className="text-blue-400 text-xs hover:text-blue-300"
+                >
+                  Copy
+                </button>
+              </div>
+              <textarea
+                value={coverLetter}
+                readOnly
+                rows={12}
+                className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white text-sm resize-none focus:outline-none"
+              />
+            </div>
+          )}
+
+          {/* Skills */}
+          {!isLoading && activeTab === 'skills' && result?.skills && (
+            <div className="space-y-4">
+              <p className="text-green-400 text-xs font-medium">✓ Skills extracted</p>
+              <div>
+                <p className="text-slate-400 text-xs mb-1">Name</p>
+                <p className="text-white text-sm">{result.name}</p>
+              </div>
+              <div>
+                <p className="text-slate-400 text-xs mb-1">Current Title</p>
+                <p className="text-white text-sm">{result.current_title}</p>
+              </div>
+              <div>
+                <p className="text-slate-400 text-xs mb-1">Experience</p>
+                <p className="text-white text-sm">{result.experience_years} years</p>
+              </div>
+              <div>
+                <p className="text-slate-400 text-xs mb-2">Skills</p>
+                <div className="flex flex-wrap gap-2">
+                  {result.skills?.map((s: string) => (
+                    <span key={s} className="bg-blue-500/10 text-blue-400 text-xs px-2.5 py-1 rounded-full">{s}</span>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-slate-400 text-xs mb-1">Summary</p>
+                <p className="text-white text-sm">{result.summary}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Empty State */}
+          {!isLoading && !result && !coverLetter && (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <Sparkles className="w-10 h-10 text-slate-600 mb-3" />
+              <p className="text-slate-400 text-sm">Fill in job details and click an action button</p>
+              <p className="text-slate-500 text-xs mt-1">Powered by Gemini AI</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
