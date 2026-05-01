@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Rocket, Upload, Plus, X, ChevronRight, ChevronLeft, Check } from 'lucide-react'
+import { Rocket, Upload, ChevronRight, ChevronLeft, Check } from 'lucide-react'
 
 const steps = ['Profile', 'Skills', 'Preferences', 'Done']
 

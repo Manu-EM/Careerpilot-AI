@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FileText, Upload, Sparkles, Download, CheckCircle, AlertCircle, Loader } from 'lucide-react'
+import { FileText, Sparkles, CheckCircle, AlertCircle, Loader } from 'lucide-react'
 import { API_URL } from '../config'
 
 

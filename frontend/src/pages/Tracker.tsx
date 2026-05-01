@@ -2,14 +2,7 @@ import { useState, useEffect } from 'react'
 import { Briefcase, Calendar, ExternalLink } from 'lucide-react'
 import { API_URL } from '../config'
 
-const columnColors: Record<string, string> = {
-  Saved:      'border-slate-500',
-  Applied:    'border-blue-500',
-  Assessment: 'border-amber-500',
-  Interview:  'border-purple-500',
-  Offer:      'border-green-500',
-  Rejected:   'border-red-500',
-}
+
 
 const tabActive: Record<string, string> = {
   Saved:      'bg-slate-500 text-white',

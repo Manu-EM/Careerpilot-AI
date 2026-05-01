@@ -57,7 +57,7 @@ export default function Analytics() {
   // Calculate real stats
   const totalApplied    = applications.filter(a => a.status === 'Applied').length
   const totalInterviews = applications.filter(a => a.status === 'Interview').length
-  const totalOffers     = applications.filter(a => a.status === 'Offer').length
+  // const totalOffers     = applications.filter(a => a.status === 'Offer').length
   const responseRate    = applications.length > 0
     ? Math.round((totalInterviews / applications.length) * 100)
     : 0
