@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react'
 import { Briefcase, Send, BarChart3, TrendingUp, Clock, CheckCircle, XCircle, Star } from 'lucide-react'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { useAuthStore } from '../store/authStore'
+import { API_URL } from '../config'
 
-const API_URL = 'http://127.0.0.1:8000'
 
 const activityData = [
   { day: 'Mon', applications: 4, matches: 12 },

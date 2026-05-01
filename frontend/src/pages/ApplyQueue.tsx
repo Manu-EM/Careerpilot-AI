@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Briefcase, MapPin, Star, CheckCircle, XCircle, Clock, Send } from 'lucide-react'
-const API_URL = 'http://127.0.0.1:8000'
+import { API_URL } from '../config'
 
 
 const riskColor: Record<string, string> = {

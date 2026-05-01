@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { FileText, Upload, Sparkles, Download, CheckCircle, AlertCircle, Loader } from 'lucide-react'
 import { API_URL } from '../config'
 
+
 const DEFAULT_RESUME = `John Doe | Frontend Developer
 Email: john@email.com | Phone: +1-555-0123
 
