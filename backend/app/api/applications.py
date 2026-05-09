@@ -6,18 +6,17 @@ import uuid
 from app.database import get_db
 from app.models.application import Application
 from app.schemas.application import ApplicationCreate, ApplicationUpdate, ApplicationResponse
+from app.core.security import get_current_user_id
 
 router = APIRouter(prefix="/applications", tags=["Applications"])
-
-# Your user ID — hardcoded for now until we add full auth
-USER_ID = uuid.UUID("06756edc-9a8d-4f0f-8303-a8279fd0d6bf")
 
 @router.get("/", response_model=List[ApplicationResponse])
 async def get_applications(
     status: str = None,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    user_id: uuid.UUID = Depends(get_current_user_id)
 ):
-    query = select(Application).where(Application.user_id == USER_ID)
+    query = select(Application).where(Application.user_id == user_id)
     if status:
         query = query.where(Application.status == status)
     query = query.order_by(Application.created_at.desc())
@@ -27,12 +26,13 @@ async def get_applications(
 @router.post("/", response_model=ApplicationResponse)
 async def create_application(
     data: ApplicationCreate,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    user_id: uuid.UUID = Depends(get_current_user_id)
 ):
-    # Check if application already exists for this job
+    # Check duplicate
     existing = await db.execute(
         select(Application).where(
-            Application.user_id == USER_ID,
+            Application.user_id == user_id,
             Application.job_id == data.job_id
         )
     )
@@ -45,7 +45,7 @@ async def create_application(
         status = "Saved"
 
     application = Application(
-        user_id=USER_ID,
+        user_id=user_id,
         status=status,
         **data.model_dump()
     )
@@ -58,10 +58,14 @@ async def create_application(
 async def update_application(
     app_id: str,
     data: ApplicationUpdate,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    user_id: uuid.UUID = Depends(get_current_user_id)
 ):
     result = await db.execute(
-        select(Application).where(Application.id == app_id)
+        select(Application).where(
+            Application.id == app_id,
+            Application.user_id == user_id
+        )
     )
     application = result.scalar_one_or_none()
     if not application:
@@ -75,9 +79,16 @@ async def update_application(
     return application
 
 @router.delete("/{app_id}")
-async def delete_application(app_id: str, db: AsyncSession = Depends(get_db)):
+async def delete_application(
+    app_id: str,
+    db: AsyncSession = Depends(get_db),
+    user_id: uuid.UUID = Depends(get_current_user_id)
+):
     result = await db.execute(
-        select(Application).where(Application.id == app_id)
+        select(Application).where(
+            Application.id == app_id,
+            Application.user_id == user_id
+        )
     )
     application = result.scalar_one_or_none()
     if not application:
@@ -87,10 +98,14 @@ async def delete_application(app_id: str, db: AsyncSession = Depends(get_db)):
     return {"message": "Deleted successfully"}
 
 @router.delete("/job/{job_id}")
-async def delete_application_by_job(job_id: str, db: AsyncSession = Depends(get_db)):
+async def delete_application_by_job(
+    job_id: str,
+    db: AsyncSession = Depends(get_db),
+    user_id: uuid.UUID = Depends(get_current_user_id)
+):
     result = await db.execute(
         select(Application).where(
-            Application.user_id == USER_ID,
+            Application.user_id == user_id,
             Application.job_id == uuid.UUID(job_id)
         )
     )

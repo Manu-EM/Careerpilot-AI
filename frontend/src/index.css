@@ -128,3 +128,29 @@
     @apply font-sans;
     }
 }
+
+
+@import "tailwindcss";
+
+/* Light mode overrides */
+html.light {
+  --tw-bg-opacity: 1;
+}
+
+html.light body {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+html.light .bg-slate-950 { background-color: #f1f5f9 !important; }
+html.light .bg-slate-900 { background-color: #ffffff !important; }
+html.light .bg-slate-800 { background-color: #f1f5f9 !important; }
+html.light .bg-slate-800\/50 { background-color: #f8fafc !important; }
+html.light .border-slate-800 { border-color: #e2e8f0 !important; }
+html.light .border-slate-700 { border-color: #cbd5e1 !important; }
+html.light .text-white { color: #0f172a !important; }
+html.light .text-slate-400 { color: #64748b !important; }
+html.light .text-slate-300 { color: #475569 !important; }
+html.light .text-slate-500 { color: #94a3b8 !important; }
+html.light .bg-slate-700 { background-color: #e2e8f0 !important; }
+html.light .divide-slate-800 > * { border-color: #e2e8f0 !important; }

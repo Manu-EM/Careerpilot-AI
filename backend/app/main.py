@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.api import auth, jobs, applications, ai, scraper
+from app.api import auth, jobs, applications, ai, scraper, profile
 from app.database import engine, Base
 
 app = FastAPI(
@@ -27,6 +27,7 @@ app.include_router(jobs.router, prefix="/api/v1")
 app.include_router(applications.router, prefix="/api/v1")
 app.include_router(ai.router, prefix="/api/v1")
 app.include_router(scraper.router, prefix="/api/v1")
+app.include_router(profile.router, prefix="/api/v1")
 
 # Health check
 @app.get("/")

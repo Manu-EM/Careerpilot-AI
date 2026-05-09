@@ -29,42 +29,47 @@ export default function Jobs() {
   }
 
   const scrapeNewJobs = async () => {
-    setIsScraping(true)
-    try {
-      await fetch(`${API_URL}/api/v1/scraper/scrape-now`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          keywords: ['react', 'frontend', 'python', 'fullstack', 'engineer'],
-          sources: ['greenhouse', 'lever', 'remoteok'],
-          resume_text: 'Frontend Developer with React TypeScript Node.js experience'
-        })
+  setIsScraping(true)
+  try {
+    const token = localStorage.getItem('access_token')
+    await fetch(`${API_URL}/api/v1/scraper/scrape-now`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        keywords: ['react', 'frontend', 'python', 'fullstack', 'engineer', 'data'],
+        sources: ['greenhouse', 'lever', 'remoteok'],
+        resume_text: 'Frontend Developer with React TypeScript Node.js experience'
       })
-      await fetchJobs()
-    } catch(e) {
-      console.log('Scraping error:', e)
-    }
-    setIsScraping(false)
+    })
+    await fetchJobs()
+  } catch(e) {
+    console.log('Scraping error:', e)
   }
+  setIsScraping(false)
+}
 
   useEffect(() => {
-    const loadAll = async () => {
-      await fetchJobs()
-      try {
-        const res = await fetch('http://127.0.0.1:8000/api/v1/applications/')
-        const data = await res.json()
-        if (Array.isArray(data)) {
-          const savedIds = new Set(
-            data.map((a: any) => a.job_id)
-          )
-          setSavedJobs(savedIds)
-        }
-      } catch(e) {
-        console.log('Error loading saved:', e)
+  const loadAll = async () => {
+    await fetchJobs()
+    try {
+      const token = localStorage.getItem('access_token')
+      const res = await fetch(`${API_URL}/api/v1/applications/`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      const data = await res.json()
+      if (Array.isArray(data)) {
+        const savedIds = new Set(data.map((a: any) => a.job_id))
+        setSavedJobs(savedIds)
       }
+    } catch(e) {
+      console.log('Error loading saved:', e)
     }
-    loadAll()
-  }, [])
+  }
+  loadAll()
+}, [])
 
   const filtered = jobs.filter(j =>
     j.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -72,48 +77,49 @@ export default function Jobs() {
   )
 
   const toggleSave = async (job: any) => {
-    if (savingJob === job.id) return
+  if (savingJob === job.id) return
 
-    setSavingJob(job.id)
+  setSavingJob(job.id)
+  const token = localStorage.getItem('access_token')  // ← moved to top
 
-    if (savedJobs.has(job.id)) {
-      // Unsave
-      try {
-        await fetch(`http://127.0.0.1:8000/api/v1/applications/job/${job.id}`, {
-          method: 'DELETE'
-        })
-        setSavedJobs(prev => {
-          const next = new Set(prev)
-          next.delete(job.id)
-          return next
-        })
-      } catch(e) {
-        console.log('Error unsaving:', e)
-      }
-    } else {
-      // Save
-      try {
-        const token = localStorage.getItem('access_token')
-        const response = await fetch('http://127.0.0.1:8000/api/v1/applications/', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            job_id: job.id,
-            notes: 'Saved from Jobs page'
-          })
-        })
-        if (response.ok || response.status === 400) {
-          setSavedJobs(prev => new Set([...prev, job.id]))
-        }
-      } catch(e) {
-        console.log('Error saving:', e)
-      }
+  if (savedJobs.has(job.id)) {
+    // Unsave
+    try {
+      await fetch(`${API_URL}/api/v1/applications/job/${job.id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      setSavedJobs(prev => {
+        const next = new Set(prev)
+        next.delete(job.id)
+        return next
+      })
+    } catch(e) {
+      console.log('Error unsaving:', e)
     }
-    setSavingJob(null)
+  } else {
+    // Save
+    try {
+      const response = await fetch(`${API_URL}/api/v1/applications/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          job_id: job.id,
+          notes: 'Saved from Jobs page'
+        })
+      })
+      if (response.ok || response.status === 400) {
+        setSavedJobs(prev => new Set([...prev, job.id]))
+      }
+    } catch(e) {
+      console.log('Error saving:', e)
+    }
   }
+  setSavingJob(null)
+}
 
 
 

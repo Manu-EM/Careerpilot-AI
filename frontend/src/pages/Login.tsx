@@ -13,7 +13,7 @@ export default function Login() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     const success = await login(email, password)
-    if (success) navigate('/dashboard')
+      if (success) navigate('/app/dashboard')
   }
 
   return (
